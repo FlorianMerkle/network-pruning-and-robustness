@@ -1,0 +1,2 @@
+model_checkpoint_path: "base-model-weights-cnn-glob-1"
+all_model_checkpoint_paths: "base-model-weights-cnn-glob-1"
