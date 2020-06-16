@@ -5,9 +5,8 @@ Pruning Methods:
 * local magnitude unstructured
 * global magnitude structured
 * local magnitude structured
-* global random unstructured
-* local random unstructured
 
+* local/global random unstructured
 
 
 Experiments:
