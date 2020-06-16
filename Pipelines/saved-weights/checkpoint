@@ -1,2 +1,2 @@
-model_checkpoint_path: "mlp-global-random-unstruct-2"
-all_model_checkpoint_paths: "mlp-global-random-unstruct-2"
+model_checkpoint_path: "cnn-magnitude-global-unstructured-2"
+all_model_checkpoint_paths: "cnn-magnitude-global-unstructured-2"
