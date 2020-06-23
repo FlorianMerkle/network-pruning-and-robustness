@@ -1,2 +1,2 @@
-model_checkpoint_path: "MLP-magnitude-local-unstructured-0"
-all_model_checkpoint_paths: "MLP-magnitude-local-unstructured-0"
+model_checkpoint_path: "cnn-random-local-unstructured-0"
+all_model_checkpoint_paths: "cnn-random-local-unstructured-0"
