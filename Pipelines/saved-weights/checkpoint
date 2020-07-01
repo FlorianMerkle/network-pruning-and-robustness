@@ -1,2 +1,2 @@
-model_checkpoint_path: "cnn-magnitude-global-struct-9"
-all_model_checkpoint_paths: "cnn-magnitude-global-struct-9"
+model_checkpoint_path: "cnn-magnitude-global-unstructured-0"
+all_model_checkpoint_paths: "cnn-magnitude-global-unstructured-0"
