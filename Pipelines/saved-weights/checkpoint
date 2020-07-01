@@ -1,2 +1,2 @@
-model_checkpoint_path: "cnn-magnitude-global-unstructured-0"
-all_model_checkpoint_paths: "cnn-magnitude-global-unstructured-0"
+model_checkpoint_path: "cnn-random-local-structured-0"
+all_model_checkpoint_paths: "cnn-random-local-structured-0"
