@@ -1,2 +1,2 @@
-model_checkpoint_path: "cnn-random-local-structured-0"
-all_model_checkpoint_paths: "cnn-random-local-structured-0"
+model_checkpoint_path: "MLP-random-local-unstructured-0"
+all_model_checkpoint_paths: "MLP-random-local-unstructured-0"
