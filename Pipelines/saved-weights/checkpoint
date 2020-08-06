@@ -1,2 +1,7 @@
+<<<<<<< HEAD
 model_checkpoint_path: "fixed-eps-ResNet-magnitude-local-unstructured-0"
 all_model_checkpoint_paths: "fixed-eps-ResNet-magnitude-local-unstructured-0"
+=======
+model_checkpoint_path: "MLP-random-local-unstructured-0"
+all_model_checkpoint_paths: "MLP-random-local-unstructured-0"
+>>>>>>> e6b3f9fd4bbae9b9f0b220472ecb1ccb1e248a53
