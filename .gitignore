@@ -3,5 +3,5 @@
 .ipynb_checkpoints
 Adversarial/saved-models
 saved-models
-pipelines/saved-weights
-pipelines/saved-results
+Pipelines/saved-weights
+Pipelines/saved-results

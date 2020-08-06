@@ -1,0 +1,67 @@
+iteration,experiment_name,structure,method,scope,pruning_ratio,accuracy,loss,pgd_linf,cw_l2,bb_l0,total_params,params_left
+0,fixed-eps-ResNet-magnitude-global-unstructured,unstructured,magnitude,global,0.0,0.8081528544425964,1.110055685043335,"[0.7734375, 0.921875, 1.0, 1.0, 1.0]","([37.23358, 22.223219, 16.74894, 3.0611851, 23.479984, 16.579681, 35.21852, 0.00013079609, 6.6505604, 9.500165e-05, 18.522402, 12.004794, 6.723298, 9.156912e-05, 24.89252, 18.730227, 8.954497, 18.549282, 0.00011859472, 19.480352, 16.802061, 19.31879, 15.227141, 34.529327, 26.131098, 17.841885, 0.00013244309, 19.920008, 13.9139385, 0.00013982976, 7.3749647, 16.209805, 20.964334, 36.151703, 33.24943, 0.000114068716, 31.031466, 0.00014877888, 25.065317, 17.885502, 14.028341, 13.2862625, 27.554821, 8.232159, 0.00012557585, 0.00011667442, 19.984299, 29.423779, 0.00010284174, 32.914143, 22.104391, 22.883722, 31.011377, 45.09253, 0.0001468948, 22.552929, 23.842293, 23.820343, 8.746238e-05, 13.21558, 24.043468, 0.00011474856, 0.00012039154, 15.572381, 8.085675e-05, 23.119667, 17.88892, 29.190517, 28.830717, 0.00013606474, 16.017647, 5.8449554, 0.00014088779, 28.48569, 11.412662, 5.4907403, 0.00010105779, 5.7753096, 9.392768, 23.539808, 13.254409, 14.493018, 33.077087, 23.726095, 0.00011286363, 22.095936, 0.000105374944, 7.9235484e-05, 12.335321, 16.6098, 9.647278, 0.00012229015, 9.5772535e-05, 0.00013808202, 18.00125, 15.179329, 4.4092917, 20.097668, 22.189474, 16.42284, 29.253088, 36.31317, 29.557095, 20.48982, 32.58266, 0.0001443994, 0.0001128749, 28.63911, 21.909857, 24.59236, 26.374716, 32.172855, 0.000109075074, 27.776241, 9.1727765e-05, 3.4750347, 0.00011961602, 12.968922, 25.213099, 28.63476, 25.177212, 0.00011910818, 25.11503, 13.751525, 30.174484, 22.869175, 34.755554, 26.363132], [<tf.Tensor: shape=(32,), dtype=bool, numpy=
+array([ True,  True, False,  True, False, False,  True,  True,  True,
+        True, False, False,  True,  True, False, False,  True, False,
+        True, False, False, False, False,  True,  True,  True,  True,
+       False,  True,  True,  True, False])>, <tf.Tensor: shape=(32,), dtype=bool, numpy=
+array([ True, False,  True,  True,  True,  True, False,  True,  True,
+        True, False,  True,  True,  True, False,  True,  True,  True,
+       False, False, False, False,  True, False, False, False,  True,
+       False, False,  True,  True, False])>, <tf.Tensor: shape=(32,), dtype=bool, numpy=
+array([ True,  True,  True,  True,  True,  True,  True,  True,  True,
+        True,  True,  True,  True,  True,  True, False, False,  True,
+       False, False,  True,  True,  True,  True,  True,  True,  True,
+        True,  True,  True, False,  True])>, <tf.Tensor: shape=(32,), dtype=bool, numpy=
+array([ True,  True, False,  True, False,  True,  True, False,  True,
+        True,  True,  True, False, False, False,  True,  True, False,
+        True,  True,  True,  True, False, False, False,  True,  True,
+        True,  True,  True, False,  True])>])","([141, 10, 171, 63, 977, 5, 63, 0, 163, 0, 38, 75, 51, 0, 11, 80, 100, 37, 0, 24, 8, 32, 96, 65, 93, 7, 0, 36, 32, 0, 116, 450, 51, 317, 20, 0, 40, 0, 166, 4, 40, 28, 66, 131, 0, 0, 137, 937, 0, 19, 25, 897, 16, 365, 0, 64, 91, 67, 0, 39, 21, 0, 0, 47, 0, 8, 6, 61, 23, 0, 6, 70, 0, 26, 41, 53, 0, 220, 29, 52, 17, 2, 54, 81, 0, 73, 0, 0, 59, 4, 2, 0, 0, 0, 74, 11, 68, 90, 505, 4, 21, 17, 63, 31, 64, 0, 0, 29, 108, 36, 31, 42, 0, 49, 0, 99, 0, 4, 93, 101, 91, 0, 47, 8, 3606, 9, 46, 81], [<tf.Tensor: shape=(32,), dtype=bool, numpy=
+array([ True,  True,  True,  True,  True,  True,  True,  True,  True,
+        True,  True,  True,  True,  True,  True,  True,  True,  True,
+        True,  True,  True,  True,  True,  True,  True,  True,  True,
+        True,  True,  True,  True,  True])>, <tf.Tensor: shape=(32,), dtype=bool, numpy=
+array([ True,  True,  True,  True,  True,  True,  True,  True,  True,
+        True,  True,  True,  True,  True,  True,  True,  True,  True,
+        True,  True,  True,  True,  True,  True,  True,  True,  True,
+        True,  True,  True,  True,  True])>, <tf.Tensor: shape=(32,), dtype=bool, numpy=
+array([ True,  True,  True,  True,  True,  True,  True,  True,  True,
+        True,  True,  True,  True,  True,  True,  True,  True,  True,
+        True,  True,  True,  True,  True,  True,  True,  True,  True,
+        True,  True,  True,  True,  True])>, <tf.Tensor: shape=(32,), dtype=bool, numpy=
+array([ True,  True,  True,  True,  True,  True,  True,  True,  True,
+        True,  True,  True,  True,  True,  True,  True,  True,  True,
+        True,  True,  True,  True,  True,  True,  True,  True,  True,
+        True,  True,  True,  True,  True])>])",11516880,11516880
+0,fixed-eps-ResNet-magnitude-global-unstructured,unstructured,magnitude,global,0.5,0.7752866148948669,1.4170446395874023,"[0.7734375, 0.9453125, 1.0, 1.0, 1.0]","([37.732693, 26.41575, 17.950804, 8.733456, 13.009374, 0.000104774525, 3.3089912, 16.242954, 13.066604, 38.030434, 23.757019, 29.36049, 18.46964, 9.156912e-05, 27.837471, 24.455502, 23.044147, 26.318848, 0.00011859472, 18.798872, 24.871529, 17.30662, 5.5118423, 18.282635, 30.208273, 19.961237, 17.945639, 17.832132, 13.351095, 0.00013982976, 24.630373, 37.451546, 23.300621, 31.604841, 0.000117084935, 0.000114068716, 30.203808, 24.13006, 15.394948, 0.00011642697, 14.747241, 20.258192, 28.32341, 7.509688, 0.00012557585, 0.00011667442, 26.434986, 27.620382, 0.00010284174, 0.00012370081, 21.970592, 67.771866, 0.000107919965, 17.489178, 0.0001468948, 22.984268, 18.791765, 24.525171, 8.746238e-05, 17.598654, 25.982891, 0.00011474856, 0.00012039154, 3.3840456, 8.085675e-05, 21.049582, 9.948811e-05, 15.02348, 20.146065, 0.00013606474, 0.0001065953, 3.042174, 28.487259, 22.72508, 4.806008, 5.751578, 0.00010105779, 50.8509, 6.5671206, 24.776024, 22.92153, 14.373279, 35.29925, 28.283709, 21.427214, 17.401081, 24.858189, 7.9235484e-05, 3.0068247, 0.00010231336, 9.868568, 0.00012229015, 9.5772535e-05, 0.00013808202, 4.9178085, 7.658174e-05, 11.017027, 34.20816, 27.630178, 0.000110654495, 35.708775, 18.916355, 31.452074, 17.061346, 4.191944, 14.068141, 0.0001128749, 31.138374, 27.101444, 19.837711, 18.212818, 22.092663, 0.000109075074, 22.209068, 9.1727765e-05, 13.202772, 19.663637, 8.086173e-05, 20.92729, 15.889263, 21.508049, 23.33519, 18.463648, 36.497776, 23.682934, 22.005173, 25.740637, 20.20685], [<tf.Tensor: shape=(32,), dtype=bool, numpy=
+array([ True, False,  True,  True,  True,  True,  True,  True, False,
+       False, False,  True, False,  True,  True, False,  True, False,
+        True, False, False,  True,  True,  True,  True,  True, False,
+       False,  True,  True,  True, False])>, <tf.Tensor: shape=(32,), dtype=bool, numpy=
+array([ True,  True,  True,  True,  True,  True, False,  True,  True,
+       False, False,  True,  True,  True,  True, False,  True,  True,
+       False, False,  True, False,  True,  True, False, False,  True,
+       False, False,  True,  True,  True])>, <tf.Tensor: shape=(32,), dtype=bool, numpy=
+array([ True,  True,  True, False, False,  True,  True,  True,  True,
+        True,  True,  True,  True, False,  True, False,  True,  True,
+        True,  True, False,  True, False,  True,  True,  True,  True,
+        True,  True,  True,  True,  True])>, <tf.Tensor: shape=(32,), dtype=bool, numpy=
+array([ True, False, False,  True,  True,  True,  True,  True,  True,
+       False,  True,  True, False, False, False, False,  True, False,
+        True, False,  True,  True, False, False,  True, False, False,
+        True, False, False, False, False])>])","([64, 48, 35, 214, 1321, 0, 76, 11, 159, 2368, 24, 70, 137, 0, 59, 207, 42, 57, 0, 17, 28, 10, 141, 230, 75, 5, 6, 25, 19, 0, 119, 232, 28, 42, 0, 0, 164, 7, 142, 0, 26, 23, 25, 347, 0, 0, 67, 1096, 0, 0, 25, 875, 0, 312, 0, 70, 14, 41, 0, 809, 141, 0, 0, 69, 0, 2, 0, 45, 11, 0, 0, 59, 33, 4, 45, 71, 0, 3342, 38, 30, 35, 2, 55, 62, 33, 16, 28, 0, 22, 0, 10, 0, 0, 0, 30, 0, 82, 36, 119, 0, 39, 9, 47, 3, 70, 15, 0, 29, 183, 85, 11, 4, 0, 16, 0, 81, 7, 0, 52, 2166, 75, 20, 10, 27, 71, 12, 92, 317], [<tf.Tensor: shape=(32,), dtype=bool, numpy=
+array([ True,  True,  True,  True,  True,  True,  True,  True,  True,
+        True,  True,  True,  True,  True,  True,  True,  True,  True,
+        True,  True,  True,  True,  True,  True,  True,  True,  True,
+        True,  True,  True,  True,  True])>, <tf.Tensor: shape=(32,), dtype=bool, numpy=
+array([ True,  True,  True,  True,  True,  True,  True,  True,  True,
+        True,  True,  True,  True,  True,  True,  True,  True,  True,
+        True,  True,  True,  True,  True,  True,  True,  True,  True,
+        True,  True,  True,  True,  True])>, <tf.Tensor: shape=(32,), dtype=bool, numpy=
+array([ True,  True,  True,  True,  True,  True,  True,  True,  True,
+        True,  True,  True,  True,  True,  True,  True,  True,  True,
+        True,  True,  True,  True,  True,  True,  True,  True,  True,
+        True,  True,  True,  True,  True])>, <tf.Tensor: shape=(32,), dtype=bool, numpy=
+array([ True,  True,  True,  True,  True,  True,  True,  True,  True,
+        True,  True,  True,  True,  True,  True,  True,  True,  True,
+        True,  True,  True,  True,  True,  True,  True,  True,  True,
+        True,  True,  True,  True,  True])>])",11516880,5758440
