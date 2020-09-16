@@ -1,22 +1,12 @@
-# neural-network-pruning
+# Deep Neural Network Pruning and Adversarial Robustness
 
-Pruning Methods:
-* global magnitude unstructured
-* local magnitude unstructured
-* global magnitude structured
-* local magnitude structured
+This Repository contains the code for my Master's Thesis examining the impact of neural network pruning on the adversarial robustness of deep neural networks.
 
-* local/global random unstructured
+The pipelines directory contains three jupyter notebooks with which the experiments can be replicated. We implement three DNN architectures (MLP-300-100, LeNet-5-like, and ResNet18), six pruning methods (structured/unstructured, global/local, random/magnitude-based) and evaluate the models' robustness against three attacks in different distance metrics ($L_0$-Carlini&Wagner, $L_2$-Brendel&Betghe, and $L_\infty$-PGD) with several $\epsilon$-values. 
 
-
-Experiments:
-
-VGG-16 --> not converging, next: try VGG with Batch Normalization
-
-ResNet34 --> converging, takes lots of time with pruning masks
-
-LeNet5 like --> converging as expected, pruning works as expected
-
-LeNet300-100 --> converging as expected, pruning works as expected
-
-Use Xavier Initialization
+### Environment
+The most important packages and versions are:
+- Python 3.8.3
+- Tensorflow 2.2
+- Tensorflow-datasets 3.1.0
+- Foolbox 3.0.4
