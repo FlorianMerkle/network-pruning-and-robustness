@@ -17,7 +17,7 @@ from datetime import datetime
 
 import helperfiles.helpers as helpers
 
-shapes = {
+cnn_shapes = {
     # 5x5 conv, 1 input, 6 outputs
     'conv_1': (5, 5, 1, 6),
     # 5x5 conv, 6 inputs, 16 outputs
@@ -31,33 +31,9 @@ shapes = {
     # 84 inputs, 10 outputs (class prediction)
     'dense_3': (84, 10),
 }
-bias_shapes = {
-    #output depth
-    'conv_1': (6),
-    'conv_2': (16),
-    'dense_1': (120),
-    'dense_2': (84),
-    'dense_3': (10),
-}
 
 #conv2D with bias and relu activation
 
-class CustomConvLayer(layers.Layer):
-
-    def __init__(self, weights, mask, biases, strides, padding='SAME'):
-        
-        super(CustomConvLayer, self).__init__()
-        self.w = weights
-        self.m = mask
-        self.b = biases
-        self.s = strides
-        self.p = padding
-
-        
-    def call(self, inputs):
-        x = tf.nn.conv2d(inputs, tf.multiply(self.w, self.m), strides=[1, self.s, self.s, 1], padding=self.p,)# data_format='NCHW')
-        x = tf.nn.bias_add(x, self.b,)# 'NC...')
-        return tf.nn.tanh(x)
         
 
 #Average Pooling Layer
@@ -147,14 +123,14 @@ class CustomConvModel(tf.keras.Model):
 
     def __init__(self):
         super(CustomConvModel, self).__init__()
-        self.conv1 = CustomConvLayer(shapes['conv_1'], True, 1, 'SAME')#'VALID')
+        self.conv1 = CustomConvLayer(cnn_shapes['conv_1'], True, 1, 'SAME')#'VALID')
         self.maxpool1 = CustomPoolLayer(k=2, padding='SAME')
-        self.conv2 = CustomConvLayer(shapes['conv_2'], True, 1, 'VALID')
+        self.conv2 = CustomConvLayer(cnn_shapes['conv_2'], True, 1, 'VALID')
         self.maxpool2 = CustomPoolLayer(k=2, padding='VALID')
 
-        self.dense1 = CustomDenseLayer(shapes['dense_1'], True, 'relu')
-        self.dense2 = CustomDenseLayer(shapes['dense_2'], True, 'relu')
-        self.dense3 = CustomDenseLayer(shapes['dense_3'], True, 'softmax')
+        self.dense1 = CustomDenseLayer(cnn_shapes['dense_1'], True, 'relu')
+        self.dense2 = CustomDenseLayer(cnn_shapes['dense_2'], True, 'relu')
+        self.dense3 = CustomDenseLayer(cnn_shapes['dense_3'], True, 'softmax')
         #self.conv_layers = []
         #self.conv_masks = []
         #self.dense_layers = []
@@ -174,7 +150,7 @@ class CustomConvModel(tf.keras.Model):
         x = layers.Flatten()(x)
         x = self.dense1(x)
         x = self.dense2(x)
-        x =  self.dense3(x)
+        x = self.dense3(x)
         return x
     
     def prune_random_local_unstruct(self, ratio):

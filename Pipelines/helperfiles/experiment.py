@@ -20,7 +20,7 @@ AUTOTUNE = tf.data.experimental.AUTOTUNE
 
 
 
-def run(structure, method, scope, iterations, architecture, experiment_type):
+def run(structure, method, scope, iterations, architecture, experiment_type, structure_to_prune='filter', prune_dense_layers=False ):
     
     if architecture == 'ResNet' or architecture == 'VGG':
         ds_train, ds_test, attack_images, attack_labels = load_data("imagenette")
@@ -65,19 +65,19 @@ def run(structure, method, scope, iterations, architecture, experiment_type):
                 if  method=='random' and scope=='global' and structure=='unstructured':
                     model.prune_random_global_unstruct(pruning_ratio)
                 elif  method=='random' and scope=='global' and structure=='structured':
-                    model.prune_random_global_struct(pruning_ratio)
+                    model.prune_random_global_struct(pruning_ratio, structure_to_prune=structure_to_prune, prune_dense_layers=prune_dense_layers)
                 elif  method=='random' and scope=='local' and structure=='unstructured':
                     model.prune_random_local_unstruct(pruning_ratio)
                 elif  method=='random' and scope=='local' and structure=='structured':
-                    model.prune_random_local_struct(pruning_ratio)
+                    model.prune_random_local_struct(pruning_ratio, structure_to_prune=structure_to_prune, prune_dense_layers=prune_dense_layers)
                 elif  method=='magnitude' and scope=='global' and structure=='unstructured':
                     model.prune_magnitude_global_unstruct(pruning_ratio)
                 elif  method=='magnitude' and scope=='global' and structure=='structured':
-                    model.prune_magnitude_global_struct(pruning_ratio)
+                    model.prune_magnitude_global_struct(pruning_ratio, structure_to_prune=structure_to_prune, prune_dense_layers=prune_dense_layers)
                 elif  method=='magnitude' and scope=='local' and structure=='unstructured':
                     model.prune_magnitude_local_unstruct(pruning_ratio)
                 elif  method=='magnitude' and scope=='local' and structure=='structured':
-                    model.prune_magnitude_local_struct(pruning_ratio)
+                    model.prune_magnitude_local_struct(pruning_ratio, structure_to_prune=structure_to_prune, prune_dense_layers=prune_dense_layers)
                 else:
                     raise ValueError("pruning method invalid")
 

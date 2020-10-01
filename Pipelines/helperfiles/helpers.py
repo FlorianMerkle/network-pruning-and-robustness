@@ -15,10 +15,7 @@ from secrets import randbelow
 import foolbox as fb
 from datetime import datetime
 
-import helperfiles.vgg11 as vgg
-import helperfiles.resnet as resnet
-import helperfiles.mlp as mlp
-import helperfiles.cnn as cnn
+
 
 AUTOTUNE = tf.data.experimental.AUTOTUNE
 
@@ -107,7 +104,7 @@ def load_data(dataset,ratio='100%'):
 
 def compile_model(architecture, model, lr=1e-3):
     model.compile(
-        loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True) ,
+        loss=tf.keras.losses.SparseCategoricalCrossentropy() ,
         optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
         metrics=['accuracy'],
         experimental_run_tf_function=True
@@ -116,10 +113,14 @@ def compile_model(architecture, model, lr=1e-3):
     
 
 def initialize_base_model(architecture, ds, index, experiment_name, lr=1e-3, save_weights=False):
+    from .models import VGG11
+    from .models import ResNet
+    from .models import LeNet300_100
+    from .models import CNN
     if architecture == 'ResNet':
-        model = resnet.CustomResNetModel()
+        model = ResNet()
         model.compile(
-            loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True) ,
+            loss=tf.keras.losses.SparseCategoricalCrossentropy() ,
             optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
             metrics=['accuracy'],
             experimental_run_tf_function=True
@@ -129,9 +130,9 @@ def initialize_base_model(architecture, ds, index, experiment_name, lr=1e-3, sav
             epochs=1,
         )
     if architecture == 'VGG':
-        model = vgg.VGG11()
+        model = VGG11()
         model.compile(
-            loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True) ,
+            loss=tf.keras.losses.SparseCategoricalCrossentropy() ,
             optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
             metrics=['accuracy'],
             experimental_run_tf_function=True
@@ -141,9 +142,9 @@ def initialize_base_model(architecture, ds, index, experiment_name, lr=1e-3, sav
             epochs=1,
         )
     if architecture == 'CNN' :
-        model = cnn.CustomConvModel()
+        model = CNN()
         model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
-                      loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True) ,
+                      loss=tf.keras.losses.SparseCategoricalCrossentropy() ,
                       metrics=['accuracy'],
                       experimental_run_tf_function=False
                      )
@@ -154,17 +155,28 @@ def initialize_base_model(architecture, ds, index, experiment_name, lr=1e-3, sav
             epochs=1,
         )
     if architecture == 'MLP':
-        return 'not implemented yet'
+        model = LeNet300_100()
+        model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
+                      loss=tf.keras.losses.SparseCategoricalCrossentropy() ,
+                      metrics=['accuracy'],
+                      experimental_run_tf_function=False
+                     )
+        model.fit(
+            x=ds[0],
+            y=ds[1],
+            batch_size=64,
+            epochs=1,
+        )
     
     return model
 
 
 
 def train_model(architecture, ds_train, ds_test, model, to_convergence=True, epochs=5):
-    if architecture=='CNN':
+    if architecture=='CNN' or architecture=='MLP':
         if to_convergence == True:
             epochs=500
-        callback = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=3)
+        callback = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5)
         hist = model.fit(
             x=ds_train[0],
             y=ds_train[1],
@@ -223,7 +235,7 @@ def pgd_attack(architecture, model_to_attack, attack_images, attack_labels):
             epsilons=[x/255 for x in [2,4,8,16,32]]
         )
         del fmodel
-        return [np.count_nonzero(eps_res)/len(y_to_attack) for eps_res in success]
+        return [np.count_nonzero(eps_res)/len(attack_labels) for eps_res in success]
     
     if architecture == 'ResNet'  or architecture == 'VGG':
         res = [[],[],[],[],[],[]]
@@ -263,10 +275,11 @@ def cw2_attack(architecture, model_to_attack, attack_images, attack_labels, eps=
             attack_labels,
             epsilons=eps
         )
-        dists = [tf.norm(x_to_attack[i]-adversarials[0][i]).numpy() for i in range(len(x_to_attack))]
+        dists = [tf.norm(attack_images[i]-adversarials[0][i]).numpy() for i in range(len(attack_images))]
         del fmodel
         
         return dists, success.numpy().tolist()
+    
     if architecture == 'ResNet'  or architecture == 'VGG':
         success = []
         dists = [] 
@@ -292,10 +305,11 @@ def bb0_attack(architecture,model_to_attack, attack_images, attack_labels):
     fmodel = fb.models.TensorFlowModel(model_to_attack, bounds=(0,1))
     init_attack = fb.attacks.DatasetAttack()
     if architecture == 'CNN' or architecture == 'MLP':
-        BATCHSIZE = 250
+        BATCHSIZE = 1000
+        BATCHES = 1
     if architecture == 'ResNet' or architecture == 'VGG':
         BATCHSIZE = 32
-    
+        BATCHES = 8
     batches = [
         (attack_images[:BATCHSIZE], attack_labels[:BATCHSIZE]), 
         (attack_images[BATCHSIZE:2*BATCHSIZE], attack_labels[BATCHSIZE:2*BATCHSIZE]),
@@ -315,7 +329,8 @@ def bb0_attack(architecture,model_to_attack, attack_images, attack_labels):
 
     success = []
     dists = [] 
-    for i in range(8):
+    
+    for i in range(BATCHES):
         print_time(text=f'bb0 batch {i}')
         attack_batch = attack_images[i*BATCHSIZE:(i+1)*BATCHSIZE]
         attack_batch_labels = attack_labels[i*BATCHSIZE:(i+1)*BATCHSIZE]
@@ -365,6 +380,7 @@ def get_zeros_ratio(model, layers_to_examine=None):
     return np.count_nonzero(all_weights)/len(all_weights), np.count_nonzero(all_weights), len(all_weights)
 
 def plot_hist(hist):
+    print(hist)
     # summarize history for accuracy
     plt.plot(hist.history['accuracy'])
     plt.plot(hist.history['val_accuracy'])
@@ -381,10 +397,13 @@ def plot_hist(hist):
     plt.xlabel('epoch')
     plt.legend(['train', 'test'], loc='upper left')
     plt.show()
+    try:
     # summarize history for lr
-    plt.plot(hist.history['lr'])
-    plt.title('model lr')
-    plt.ylabel('lr')
-    plt.xlabel('epoch')
-    #plt.legend(['train', 'test'], loc='upper left')
-    plt.show()
+        plt.plot(hist.history['lr'])
+        plt.title('model lr')
+        plt.ylabel('lr')
+        plt.xlabel('epoch')
+        #plt.legend(['train', 'test'], loc='upper left')
+        plt.show()
+    except:
+        pass

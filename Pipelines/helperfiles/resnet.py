@@ -15,14 +15,12 @@ from secrets import randbelow
 import foolbox as fb
 from datetime import datetime
 
-import helperfiles.helpers as helpers
-
-#conv2D with bias and relu activation
+#import helperfiles.helpers as helpers
 
 class CustomConvLayer(layers.Layer):
 
 #    def __init__(self, weights, mask, biases, stride=1, padding='SAME'):
-    def __init__(self, input_channels, output_channels, filter_size=3, stride=1, padding='SAME'):
+    def __init__(self, input_channels, output_channels, bias=False, filter_size=3, stride=1, padding='SAME'):
         
         super(CustomConvLayer, self).__init__()
         self.w = self.add_weight(
@@ -52,23 +50,73 @@ class CustomConvLayer(layers.Layer):
         x = tf.nn.conv2d(inputs, tf.multiply(self.w, self.m), strides=[1, self.s, self.s, 1], padding=self.p)
         #x = tf.nn.bias_add(x, self.b)
         return tf.nn.relu(x)
+
+class CustomConvLayer(layers.Layer):
+
+    def __init__(self, shape, bias=True, stride=1, padding='SAME'):
+
+        super(CustomConvLayer, self).__init__()
+        self.bias = bias
+        self.w = self.add_weight(
+            shape=shape,
+            initializer='glorot_uniform',
+            trainable=True,
+            name='w'
+        )
+        self.m = self.add_weight(
+            shape=shape,
+            initializer='ones',
+            trainable=False,
+            name='m'
+        )
+        if self.bias==True:
+            self.b = self.add_weight(
+                shape=shape[-1],
+                initializer='zeros',
+                trainable=True,
+                name='b'
+            )
+        self.s = stride
+        self.p = padding
+        
+    def call(self, inputs):
+        x = tf.nn.conv2d(inputs, tf.multiply(self.w, self.m), strides=[1, self.s, self.s, 1], padding=self.p,)
+        if self.bias == True:
+            x = tf.nn.bias_add(x, self.b)
+        
+        return tf.nn.relu(x)
+    
+
+#conv2D with bias and relu activation
+
+
     
 
 
 
     
-class ResNetBlock(tf.keras.layers.Layer):
-    def __init__(self, input_channels=3 ,output_channels = 64, stride=1):
-        super(ResNetBlock, self).__init__()
+class ResBlock(tf.keras.layers.Layer):
+    def __init__(self, input_channels=3 ,output_channels = 64, stride=1, filter_size=3):
+        super(ResBlock, self).__init__()
         self.stride = stride
-        #self.conv1 = layers.Conv2D(filters, 3, strides=(self.stride, self.stride), activation='relu', padding='same')
-        self.conv1 = CustomConvLayer(input_channels, output_channels, stride=self.stride, filter_size=3)
+        self.conv1 = CustomConvLayer(
+            (filter_size, filter_size, input_channels, output_channels),
+            bias=False,
+            stride=self.stride, 
+        )
         self.bn1 = layers.BatchNormalization()
-        #self.conv2 = layers.Conv2D(filters, 3, padding='same')
-        self.conv2 = CustomConvLayer(output_channels, output_channels, filter_size=3)
+        self.conv2 = CustomConvLayer(
+            (filter_size, filter_size, input_channels, output_channels),
+            bias=False,
+            stride=1
+        )
         self.bn2 = layers.BatchNormalization()
         if stride == 2:
-            self.conv3 = CustomConvLayer(input_channels, output_channels, filter_size=1, stride=self.stride)
+            self.conv3 = CustomConvLayer(
+                (filter_size, filter_size, input_channels, output_channels),
+                bias=False,
+                stride=self.stride, 
+            )
             self.bn3 = layers.BatchNormalization()
         self.add1 = layers.Add()
     
@@ -84,59 +132,41 @@ class ResNetBlock(tf.keras.layers.Layer):
             inputs = self.conv3(x)
             inputs = self.bn3(x)
         return (self.add1([x, inputs]))
-    
-class DataAugmentationLayer(layers.Layer):
-    def __init__(self):
-        super(DataAugmentationLayer, self).__init__()
-        self.rotate = tf.keras.layers.experimental.preprocessing.RandomRotation(.5)
-        self.contrast = tf.keras.layers.experimental.preprocessing.RandomContrast(.8)
-        self.flip = tf.keras.layers.experimental.preprocessing.RandomFlip()
-        self.translate = tf.keras.layers.experimental.preprocessing.RandomTranslation(.25, .25, interpolation='bilinear')
-        #self.crop = tf.keras.layers.experimental.preprocessing.CenterCrop(random.uniform(0,0.5), random.uniform(0,0.5))
-    
-    def call(self, inputs, training=False):
-        x = inputs
-        x = self.rotate(x, training=training)
-        x = self.contrast(x, training=training)
-        x = self.flip(x, training=training)
-        x = self.translate(x, training=training)
-        #x = self.crop(x)
-        return x
+
     
 #Dense Layer with Bias
 class CustomDenseLayer(layers.Layer):
-    
-    def __init__(self, input_shape, output_shape, activation = 'relu'):
+    def __init__(self, shape, bias, activation = 'relu'):
         super(CustomDenseLayer, self).__init__()
+        self.bias = bias
         self.w = self.add_weight(
-            shape=(input_shape, output_shape),
+            shape = shape,
             initializer='glorot_uniform',
-            trainable=True,
+            trainable = True,
             name='w'
         )
         self.m = self.add_weight(
-            shape=(input_shape, output_shape),
+            shape = shape,
             initializer='ones',
-            trainable=False,
+            trainable = False,
             name='m'
         )
-        self.b = self.add_weight(
-            shape=(output_shape),
-            initializer='zeros',
-            trainable=True,
-            name='b'
-        )
+        if self.bias == True:
+            self.b = self.add_weight(
+                shape = (shape[-1]),
+                initializer = 'zeros',
+                trainable = True,
+                name='b'
+            )
         self.a = activation
         
         
     def call(self, inputs):
-        #print('dense w',self.w)
-        #print('dense i',inputs)
         x = tf.matmul(inputs, tf.multiply(self.w, self.m))
-        #print('dense x',x)
-        x = tf.nn.bias_add(x, self.b)
+        if self.bias == True:
+            x = tf.nn.bias_add(x, self.b)
         if self.a == 'relu':
-            return tf.nn.relu(x)
+            return tf.nn.tanh(x)
         if self.a == 'softmax':
             return tf.nn.softmax(x)
     
@@ -146,27 +176,31 @@ class CustomResNetModel(tf.keras.Model):
         super(CustomResNetModel, self).__init__()
         #self.conv1 = layers.Conv2D(64, 7, strides=(2, 2), padding='same')
         #self.aug = DataAugmentationLayer()
-        self.conv1 = CustomConvLayer(3, 64, filter_size=7, stride=2)
+        self.conv1 = CustomConvLayer(
+            (7,7,3,64),
+            bias=False,
+            stride=2
+        )
         self.pool1 = layers.MaxPool2D(pool_size=(3,3), strides=(2,2), padding='same')
-        self.res_block1 = ResNetBlock(64, 64)
-        #self.res_block2 = ResNetBlock(64, 64)
-        self.res_block3 = ResNetBlock(64, 64)
-        self.res_block4 = ResNetBlock(64, 128, 2)
-        #self.res_block5 = ResNetBlock(128, 128)
-        #self.res_block6 = ResNetBlock(128, 128)
-        self.res_block7 = ResNetBlock(128, 128)
-        self.res_block8 = ResNetBlock(128, 256, 2)
-        #self.res_block9 = ResNetBlock(256, 256)
-        #self.res_block10 = ResNetBlock(256, 256)
-        #self.res_block11 = ResNetBlock(256, 256)
-        #self.res_block12 = ResNetBlock(256, 256)
-        self.res_block13 = ResNetBlock(256, 256)
-        self.res_block14 = ResNetBlock(256 ,512, 2)
-        #self.res_block15 = ResNetBlock(512, 512)
-        self.res_block16 = ResNetBlock(512, 512)
+        self.res_block1 = ResBlock(64, 64)
+        #self.res_block2 = ResBlock(64, 64)
+        self.res_block3 = ResBlock(64, 64)
+        self.res_block4 = ResBlock(64, 128, 2)
+        #self.res_block5 = ResBlock(128, 128)
+        #self.res_block6 = ResBlock(128, 128)
+        self.res_block7 = ResBlock(128, 128)
+        self.res_block8 = ResBlock(128, 256, 2)
+        #self.res_block9 = ResBlock(256, 256)
+        #self.res_block10 = ResBlock(256, 256)
+        #self.res_block11 = ResBlock(256, 256)
+        #self.res_block12 = ResBlock(256, 256)
+        self.res_block13 = ResBlock(256, 256)
+        self.res_block14 = ResBlock(256 ,512, 2)
+        #self.res_block15 = ResBlock(512, 512)
+        self.res_block16 = ResBlock(512, 512)
         self.pool2 = layers.GlobalAveragePooling2D()
-        self.dense1 = CustomDenseLayer(512, 1000)
-        self.dense2 = CustomDenseLayer(1000, 10, activation='softmax')
+        self.dense1 = CustomDenseLayer((512, 1000), True, activation='relu')
+        self.dense2 = CustomDenseLayer((1000, 10), activation='softmax')
         #self.conv_layers = []
         #self.conv_masks = []
         #self.dense_layers = []
