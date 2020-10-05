@@ -1,3 +1,5 @@
+#todo create custom model class subclassing tf.keras.Model with generic pruning methods
+
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import tensorflow as tf
@@ -88,22 +90,22 @@ class ResNet(tf.keras.Model):
         weights = _prune_magnitude_global_unstruct(self, ratio, weights)
         self.set_weights(weights)
         return True
-    def prune_random_local_struct(self, ratio, prune_dense_layers=False, structure='channel'):
+    def prune_random_local_struct(self, ratio, prune_dense_layers=False, structure_to_prune='filter'):
         weights = self.get_weights()
-        weights = _prune_random_local_struct(self, ratio, weights, prune_dense_layers=prune_dense_layers, structure=structure)
+        weights = _prune_random_local_struct(self, ratio, weights, prune_dense_layers=prune_dense_layers, structure=structure_to_prune)
         self.set_weights(weights)
         return True
     def prune_random_global_struct(self, ratio):
         raise Warning('Not yet implemented')
         return False
-    def prune_magnitude_local_struct(self, ratio, prune_dense_layers=False, structure='channel'):
+    def prune_magnitude_local_struct(self, ratio, prune_dense_layers=False, structure_to_prune='filter'):
         weights = self.get_weights()
-        weights = _prune_magnitude_local_struct(self, ratio, weights, prune_dense_layers=prune_dense_layers, structure=structure)
+        weights = _prune_magnitude_local_struct(self, ratio, weights, prune_dense_layers=prune_dense_layers, structure=structure_to_prune)
         self.set_weights(weights)
         return True
-    def prune_magnitude_global_struct(self, ratio, prune_dense_layers=False, structure='channel'):
+    def prune_magnitude_global_struct(self, ratio, prune_dense_layers=False, structure_to_prune='filter'):
         weights = self.get_weights()
-        weights = _prune_magnitude_global_struct(self, ratio, weights, prune_dense_layers=False, structure='channel')
+        weights = _prune_magnitude_global_struct(self, ratio, weights, prune_dense_layers=False, structure=structure_to_prune)
         self.set_weights(weights)
         return True
     def prune_magnitude_local_unstruct(self, ratio):
@@ -112,7 +114,7 @@ class ResNet(tf.keras.Model):
         self.set_weights(weights)
         return True
     def find_layers_and_masks(self):
-        return True
+        return False
     
     
     
@@ -207,22 +209,22 @@ class VGG11(tf.keras.Model):
         weights = _prune_magnitude_global_unstruct(self, ratio, weights)
         self.set_weights(weights)
         return True
-    def prune_random_local_struct(self, ratio, prune_dense_layers=False, structure='channel'):
+    def prune_random_local_struct(self, ratio, prune_dense_layers=False, structure_to_prune='filter'):
         weights = self.get_weights()
-        weights = _prune_random_local_struct(self, ratio, weights, prune_dense_layers=prune_dense_layers, structure=structure)
+        weights = _prune_random_local_struct(self, ratio, weights, prune_dense_layers=prune_dense_layers, structure=structure_to_prune)
         self.set_weights(weights)
         return True
     def prune_random_global_struct(self, ratio):
         raise Warning('Not yet implemented')
         return False
-    def prune_magnitude_local_struct(self, ratio, prune_dense_layers=False, structure='channel'):
+    def prune_magnitude_local_struct(self, ratio, prune_dense_layers=False, structure_to_prune='filter'):
         weights = self.get_weights()
-        weights = _prune_magnitude_local_struct(self, ratio, weights, prune_dense_layers=prune_dense_layers, structure=structure)
+        weights = _prune_magnitude_local_struct(self, ratio, weights, prune_dense_layers=prune_dense_layers, structure=structure_to_prune)
         self.set_weights(weights)
         return True
-    def prune_magnitude_global_struct(self, ratio, prune_dense_layers=False, structure='channel'):
+    def prune_magnitude_global_struct(self, ratio, prune_dense_layers=False, structure_to_prune='filter'):
         weights = self.get_weights()
-        weights = _prune_magnitude_global_struct(self, ratio, weights, prune_dense_layers=False, structure='channel')
+        weights = _prune_magnitude_global_struct(self, ratio, weights, prune_dense_layers=False, structure=structure_to_prune)
         self.set_weights(weights)
         return True
     def prune_magnitude_local_unstruct(self, ratio):
@@ -231,7 +233,7 @@ class VGG11(tf.keras.Model):
         self.set_weights(weights)
         return True
     def find_layers_and_masks(self):
-        return True
+        return False
     
 cnn_shapes = {
     # 5x5 conv, 1 input, 6 outputs
@@ -295,22 +297,22 @@ class CNN(tf.keras.Model):
         weights = _prune_magnitude_global_unstruct(self, ratio, weights)
         self.set_weights(weights)
         return True
-    def prune_random_local_struct(self, ratio, prune_dense_layers=False, structure='channel'):
+    def prune_random_local_struct(self, ratio, prune_dense_layers=False, structure_to_prune='filter'):
         weights = self.get_weights()
-        weights = _prune_random_local_struct(self, ratio, weights, prune_dense_layers=prune_dense_layers, structure=structure)
+        weights = _prune_random_local_struct(self, ratio, weights, prune_dense_layers=prune_dense_layers, structure=structure_to_prune)
         self.set_weights(weights)
         return True
     def prune_random_global_struct(self, ratio):
         raise Warning('Not yet implemented')
         return False
-    def prune_magnitude_local_struct(self, ratio, prune_dense_layers=False, structure='channel'):
+    def prune_magnitude_local_struct(self, ratio, prune_dense_layers=False, structure_to_prune='filter'):
         weights = self.get_weights()
-        weights = _prune_magnitude_local_struct(self, ratio, weights, prune_dense_layers=prune_dense_layers, structure=structure)
+        weights = _prune_magnitude_local_struct(self, ratio, weights, prune_dense_layers=prune_dense_layers, structure=structure_to_prune)
         self.set_weights(weights)
         return True
-    def prune_magnitude_global_struct(self, ratio, prune_dense_layers=False, structure='channel'):
+    def prune_magnitude_global_struct(self, ratio, prune_dense_layers=False, structure_to_prune='filter'):
         weights = self.get_weights()
-        weights = _prune_magnitude_global_struct(self, ratio, weights, prune_dense_layers=False, structure='channel')
+        weights = _prune_magnitude_global_struct(self, ratio, weights, prune_dense_layers=False, structure=structure_to_prune)
         self.set_weights(weights)
         return True
     def prune_magnitude_local_unstruct(self, ratio):
@@ -319,7 +321,7 @@ class CNN(tf.keras.Model):
         self.set_weights(weights)
         return True
     def find_layers_and_masks(self):
-        return True
+        return False
     
     
 class LeNet300_100(tf.keras.Model):
@@ -373,6 +375,6 @@ class LeNet300_100(tf.keras.Model):
         self.set_weights(weights)
         return True
     def find_layers_and_masks(self):
-        return True
+        return False
     
     

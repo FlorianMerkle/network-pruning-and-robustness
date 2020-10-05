@@ -24,7 +24,7 @@ def _prune_random_local_unstruct(model, ratio, weights):
             converted_weights = helpers.convert_from_hwio_to_iohw(weights[layer]).numpy()
             converted_mask = helpers.convert_from_hwio_to_iohw(weights[model.conv_masks[i]]).numpy()
             #shape = 128,64, 3,3
-            layer_shape = weights[layer].shape
+            layer_shape = converted_weights.shape
             flat_masks = converted_mask.flatten()
             flat_weights = weights[layer].flatten()
             no_of_weighs_to_prune = int(np.round(ratio * len(flat_weights)))
@@ -35,10 +35,10 @@ def _prune_random_local_unstruct(model, ratio, weights):
             for idx_to_delete in indices_to_delete:
                 flat_masks[idx_to_delete] = 0
                 flat_weights[idx_to_delete] = 0
-            back_converted_mask = helpers.convert_from_iohw_to_hwio(converted_mask)
-            back_converted_weights = helpers.convert_from_iohw_to_hwio(converted_weights)
             converted_mask = flat_masks.reshape(layer_shape)
             converted_weights = flat_weights.reshape(layer_shape)
+            back_converted_mask = helpers.convert_from_iohw_to_hwio(converted_mask)
+            back_converted_weights = helpers.convert_from_iohw_to_hwio(converted_weights)
             weights[layer] = back_converted_weights
             weights[model.conv_masks[i]] = back_converted_mask
         return weights
@@ -47,7 +47,7 @@ def _prune_random_local_unstruct(model, ratio, weights):
     def prune_dense_layers(model, ratio, weights):
 #            for index, weight in enumerate(weights):
         for i, layer in enumerate(model.dense_layers):
-#                if index in dense_layer_to_prune:
+#               if index in dense_layer_to_prune:
                 shape = weights[layer].shape
                 flat_weights = weights[layer].flatten()
                 flat_mask = weights[model.dense_masks[i]].flatten()
@@ -103,8 +103,8 @@ def _prune_random_local_struct(model, ratio, weights, prune_dense_layers=False, 
     def prune_filters(model, ratio, weights):
         for i, layer in enumerate(model.conv_layers):
             # shape = (3,3,64,128)
-            oihw_weights = helpers.convert_from_hwio_to_oihw(weights[layer])
-            oihw_mask = helpers.convert_from_hwio_to_oihw(weights[model.conv_masks[i]])
+            oihw_weights = helpers.convert_from_hwio_to_oihw(weights[layer]).numpy()
+            oihw_mask = helpers.convert_from_hwio_to_oihw(weights[model.conv_masks[i]]).numpy()
             #iohw_weights = helpers.convert_from_hwio_to_iohw(weights[layer])
             #iohw_mask = helpers.convert_from_hwio_to_iohw(weights[model.conv_masks[i]])
             converted_shape = oihw_weights.shape
@@ -121,7 +121,7 @@ def _prune_random_local_struct(model, ratio, weights, prune_dense_layers=False, 
                 oihw_weights[filter_to_prune] = tf.zeros([converted_shape[1], converted_shape[2],converted_shape[3]])
                 oihw_mask[filter_to_prune] = tf.zeros([converted_shape[1], converted_shape[2],converted_shape[3]])
 
-            weights[layer] = helpers.convert_from_oihw_to_hwio(filters)
+            weights[layer] = helpers.convert_from_oihw_to_hwio(oihw_weights)
             weights[model.conv_masks[i]] = helpers.convert_from_oihw_to_hwio(oihw_mask)
         return weights
     def prune_kernels(model, ratio, weights):
@@ -184,24 +184,23 @@ def _prune_magnitude_local_struct(model, ratio, weights, prune_dense_layers=Fals
         for i, x in enumerate(model.conv_layers):
             # shape = (3,3,64,128)
             vals = []
-            oihw_weights = helpers.convert_from_hwio_to_oihw(weights[x])
-            oihw_mask = helpers.convert_from_hwio_to_oihw(weights[model.conv_masks[i]])
+            oihw_weights = helpers.convert_from_hwio_to_oihw(weights[x]).numpy()
+            oihw_mask = helpers.convert_from_hwio_to_oihw(weights[model.conv_masks[i]]).numpy()
             # shape = (128,64,3,3)
             converted_shape = oihw_weights.shape
             no_of_filters = converted_shape[0]
-            no_of_filters_to_prune = int(np.round(ratio * no_of_kernels))
+            no_of_filters_to_prune = int(np.round(ratio * no_of_filters))
             for single_filter in oihw_weights:
                 #shape of single_filter = (64,3,3)
                 vals.append(tf.math.reduce_sum(tf.math.abs(single_filter)))
-            filters_to_prune = np.argsort(vals)[:no_of_kernels_to_prune]
-
-            for filters_to_prune in no_of_filters_to_prune:
-                oihw_weights[filters_to_prune] = tf.zeros([converted_shape[1], converted_shape[2], converted_shape[3]])
-                mask[kernel_to_prune] = tf.zeros([converted_shape[1], converted_shape[2], converted_shape[3]])
+            filters_to_prune = np.argsort(vals)[:no_of_filters_to_prune]
+            for filter_to_prune in filters_to_prune:
+                oihw_weights[filter_to_prune] = tf.zeros([converted_shape[1], converted_shape[2], converted_shape[3]])
+                oihw_mask[filter_to_prune] = tf.zeros([converted_shape[1], converted_shape[2], converted_shape[3]])
 
                 # shape = (128,64,3,3)
             weights[x] = helpers.convert_from_oihw_to_hwio(oihw_weights)
-            weights[model.conv_masks[i]] = helpers.convert_from_oihw_to_hwio(mask)
+            weights[model.conv_masks[i]] = helpers.convert_from_oihw_to_hwio(oihw_mask)
                 # shape = (64,128,3,3)
         return weights
     
@@ -247,7 +246,7 @@ def _prune_magnitude_local_struct(model, ratio, weights, prune_dense_layers=Fals
     if structure == 'kernel':
         prune_kernels(model,ratio, weights)
     if structure == 'filter':
-        prune_filter(model,ratio, weights)
+        prune_filters(model,ratio, weights)
     
     if prune_dense_layers==True:
         prune_dense_layers(model, ratio, weights)
@@ -272,7 +271,7 @@ def _prune_magnitude_global_struct(model, ratio, weights, prune_dense_layers=Fal
             all_filters = list(all_filters) +  list(oihw_weights)
             all_masks = list(all_masks) + list(oihw_mask)
         no_of_filters_to_prune = int(np.round(ratio * len(vals)))
-        filters_to_prune = np.argsort(vals)[:no_of_kernels_to_prune]
+        filters_to_prune = np.argsort(vals)[:no_of_filters_to_prune]
         
         for filter_to_prune in filters_to_prune:
             all_filters[filter_to_prune] = tf.zeros(all_filters[filter_to_prune].shape) 
@@ -288,7 +287,7 @@ def _prune_magnitude_global_struct(model, ratio, weights, prune_dense_layers=Fal
             z = z + original_shape[0]
         return weights
     
-    def prune_kernels(model, ratio):
+    def prune_kernels(model, ratio, weights):
         all_kernels = []
         all_masks = []
         vals = []
@@ -296,7 +295,7 @@ def _prune_magnitude_global_struct(model, ratio, weights, prune_dense_layers=Fal
             # convert from e.g. (3,3,1,6) to (1,6,3,3)
             iohw_weights = helpers.convert_from_hwio_to_iohw(weights[layer_to_prune])
             converted_shape = iohw_weights.shape
-            no_of_kernels = helpers.converted_shape[0]*converted_shape[1]
+            no_of_kernels = converted_shape[0]*converted_shape[1]
             #convert from (1,6,3,3) to (6,3,3)
             kernels = tf.reshape(iohw_weights, (no_of_kernels,converted_shape[2],converted_shape[3])).numpy()
             mask = np.ones((no_of_kernels,converted_shape[2],converted_shape[3]))
