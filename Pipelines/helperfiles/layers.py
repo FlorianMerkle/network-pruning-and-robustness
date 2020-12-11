@@ -13,22 +13,25 @@ class ResBlock(tf.keras.layers.Layer):
         self.conv1 = CustomConvLayer(
             (filter_size, filter_size, input_channels, output_channels),
             bias=False,
-            stride=self.stride, 
+            stride=self.stride,
+            activation=None 
         )
         self.bn1 = layers.BatchNormalization()
         self.conv2 = CustomConvLayer(
-            (filter_size, filter_size, input_channels, output_channels),
+            (filter_size, filter_size, output_channels, output_channels),
             bias=False,
-            stride=1
+            stride=1,
+            activation=None
         )
         self.bn2 = layers.BatchNormalization()
         if stride == 2:
             self.conv3 = CustomConvLayer(
-                (filter_size, filter_size, input_channels, output_channels),
+                (1, 1, input_channels, output_channels),
                 bias=False,
-                stride=self.stride, 
+                stride=self.stride,
+            activation=None
             )
-            self.bn3 = layers.BatchNormalization()
+
         self.add1 = layers.Add()
     
     def call(self, inputs, training=False):
@@ -40,13 +43,13 @@ class ResBlock(tf.keras.layers.Layer):
         x = self.conv2(x)
         
         if self.stride == 2:
-            inputs = self.conv3(x)
-            inputs = self.bn3(x)
+            inputs = self.conv3(inputs)
+
         return (self.add1([x, inputs]))
 
 class CustomConvLayer(layers.Layer):
 
-    def __init__(self, shape, bias=True, stride=1, padding='SAME'):
+    def __init__(self, shape, bias=True, stride=1, padding='SAME', activation='relu'):
 
         super(CustomConvLayer, self).__init__()
         self.bias = bias
@@ -71,13 +74,15 @@ class CustomConvLayer(layers.Layer):
             )
         self.s = stride
         self.p = padding
+        self.a = activation
         
     def call(self, inputs):
         x = tf.nn.conv2d(inputs, tf.multiply(self.w, self.m), strides=[1, self.s, self.s, 1], padding=self.p,)
         if self.bias == True:
             x = tf.nn.bias_add(x, self.b)
-        
-        return tf.nn.relu(x)
+        if self.a == 'relu':
+            x = tf.nn.relu(x)
+        return x
     
 #Dense Layer with Bias
 class CustomDenseLayer(layers.Layer):

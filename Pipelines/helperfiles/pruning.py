@@ -19,14 +19,17 @@ from . import helpers
 
 def _prune_random_local_unstruct(model, ratio, weights):
     def prune_conv_layers(model, ratio, weights):
-        for i, layer in enumerate(model.conv_layers):
+        #print(model.conv_layers)
+        #print(model.conv_masks)
+        for i, _ in enumerate(model.conv_layers):
+            
             #shape = 3,3,64,128
-            converted_weights = helpers.convert_from_hwio_to_iohw(weights[layer]).numpy()
+            converted_weights = helpers.convert_from_hwio_to_iohw(weights[model.conv_layers[i]]).numpy()
             converted_mask = helpers.convert_from_hwio_to_iohw(weights[model.conv_masks[i]]).numpy()
             #shape = 128,64, 3,3
             layer_shape = converted_weights.shape
             flat_masks = converted_mask.flatten()
-            flat_weights = weights[layer].flatten()
+            flat_weights = weights[model.conv_layers[i]].flatten()
             no_of_weighs_to_prune = int(np.round(ratio * len(flat_weights)))
             non_zero_weights = np.nonzero(flat_weights)[0]
             no_of_weights_to_prune_left = int(no_of_weighs_to_prune - (len(flat_weights) - len(non_zero_weights)) )
@@ -39,7 +42,7 @@ def _prune_random_local_unstruct(model, ratio, weights):
             converted_weights = flat_weights.reshape(layer_shape)
             back_converted_mask = helpers.convert_from_iohw_to_hwio(converted_mask)
             back_converted_weights = helpers.convert_from_iohw_to_hwio(converted_weights)
-            weights[layer] = back_converted_weights
+            weights[model.conv_layers[i]] = back_converted_weights
             weights[model.conv_masks[i]] = back_converted_mask
         return weights
         

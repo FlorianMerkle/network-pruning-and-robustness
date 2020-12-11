@@ -35,6 +35,12 @@ def load_data(dataset,ratio='100%'):
         image = tf.image.random_crop(image, size=[224,224,3]) # Random crop back to 28x28
         return image,label
     
+    def cifar_augment(image,label):
+        image = tf.image.random_flip_left_right(image)
+        image = tf.image.resize_with_crop_or_pad(image, 32+6, 32+6)
+        image = tf.image.random_crop(image, size=[32,32,3])
+        return image,label
+    
     @tf.function
     def load_image(datapoint):
         input_image, label = normalize(datapoint)
@@ -59,7 +65,44 @@ def load_data(dataset,ratio='100%'):
         y_test = tf.convert_to_tensor([sample[1] for sample in ds_test])
 
         return [x_train, y_train], [x_test, y_test], x_test[:1000], y_test[:1000]
-        
+    
+    if dataset=='cifar10':
+        ds, info = tfds.load(name=dataset, with_info=True, split=[f"train[:{ratio}]",f"test[:{ratio}]"])
+        ds_train=ds[0]
+        ds_test=ds[1]
+        def normalize(x):
+            y = {'image': tf.image.convert_image_dtype(x['image'], tf.float32), 'label': x['label']}
+            y = (tf.image.resize(y['image'], (32,32)), y['label'])
+            return y
+        num_train_examples= info.splits['train'].num_examples
+        BATCH_SIZE = 128
+
+        ds_train = (
+            ds_train
+            .map(normalize, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+            .take(num_train_examples)
+            .cache()
+            .shuffle(num_train_examples)
+            .map(cifar_augment, num_parallel_calls=AUTOTUNE)
+            .batch(BATCH_SIZE)
+            .prefetch(AUTOTUNE)
+        ) 
+
+        ds_test = ds_test.map(
+            normalize, )
+        ds_test = ds_test.batch(BATCH_SIZE)
+        ds_test = ds_test.cache()
+        ds_test = ds_test.prefetch(tf.data.experimental.AUTOTUNE)
+
+
+
+        attack_set = list(ds[1].map(load_image))[:1000]
+
+        attack_images = tf.convert_to_tensor([sample[0] for sample in attack_set])
+        attack_labels = tf.convert_to_tensor([sample[1] for sample in attack_set])
+        return ds_train, ds_test, attack_images, attack_labels
+    
+    
     if dataset=='imagenette':
         ds, info = tfds.load(name=dataset, with_info=True, split=[f"train[:{ratio}]",f"validation[:{ratio}]"])
         
@@ -68,6 +111,7 @@ def load_data(dataset,ratio='100%'):
         def normalize(x):
             y = {'image': tf.image.convert_image_dtype(x['image'], tf.float32), 'label': x['label']}
             y = (tf.image.resize(y['image'], (224,224)), y['label'])
+            print('y tho?')
             return y
 
 
@@ -115,10 +159,23 @@ def compile_model(architecture, model, lr=1e-3):
 def initialize_base_model(architecture, ds, index, experiment_name, lr=1e-3, save_weights=False):
     from .models import VGG11
     from .models import ResNet
+    from .models import ResNet8
     from .models import LeNet300_100
     from .models import CNN
     if architecture == 'ResNet':
         model = ResNet()
+        model.compile(
+            loss=tf.keras.losses.SparseCategoricalCrossentropy() ,
+            optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
+            metrics=['accuracy'],
+            experimental_run_tf_function=True
+        )
+        model.fit(
+            x=ds,
+            epochs=1,
+        )
+    if architecture == 'ResNet8':
+        model = ResNet8()
         model.compile(
             loss=tf.keras.losses.SparseCategoricalCrossentropy() ,
             optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
@@ -187,7 +244,7 @@ def train_model(architecture, ds_train, ds_test, model, to_convergence=True, epo
         )
         return hist
     
-    if architecture=='ResNet' or architecture == 'VGG':
+    if architecture=='ResNet' or architecture == 'VGG' or architecture == 'ResNet8':
 
         reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(
             patience=12,
@@ -227,7 +284,7 @@ def pgd_attack(architecture, model_to_attack, attack_images, attack_labels):
     BATCHSIZE = 32
     fmodel = fb.models.TensorFlowModel(model_to_attack, bounds=(0,1))
     attack = fb.attacks.LinfProjectedGradientDescentAttack()
-    if architecture == 'CNN' or architecture == 'MLP':
+    if architecture == 'CNN' or architecture == 'MLP' or architecture == 'ResNet8':
         adversarials, _, success = attack(
             fmodel,
             attack_images,
@@ -237,7 +294,17 @@ def pgd_attack(architecture, model_to_attack, attack_images, attack_labels):
         del fmodel
         return [np.count_nonzero(eps_res)/len(attack_labels) for eps_res in success]
     
-    if architecture == 'ResNet'  or architecture == 'VGG':
+    if architecture == 'ResNet8' or architecture == 'VGG':
+        adversarials, _, success = attack(
+            fmodel,
+            attack_images,
+            attack_labels,
+            epsilons=[x/255 for x in [.5,1,2,4,8,16,32]]
+        )
+        del fmodel
+        return [np.count_nonzero(eps_res)/len(attack_labels) for eps_res in success]
+    
+    if architecture == 'ResNet':
         res = [[],[],[],[],[],[]]
         strengths = [0.125,0.25,0.5,1,2,4]
         for i in range(8):
@@ -268,7 +335,7 @@ def cw2_attack(architecture, model_to_attack, attack_images, attack_labels, eps=
         initial_const = 100,
         abort_early = True,
     )
-    if architecture == 'CNN' or architecture == 'MLP':
+    if architecture == 'CNN' or architecture == 'MLP' or architecture == 'ResNet8' or architecture == 'VGG' :
         adversarials, _, success = attack(
             fmodel,
             attack_images,
@@ -304,10 +371,10 @@ def bb0_attack(architecture,model_to_attack, attack_images, attack_labels):
     print_time(text=f'starting bb0')
     fmodel = fb.models.TensorFlowModel(model_to_attack, bounds=(0,1))
     init_attack = fb.attacks.DatasetAttack()
-    if architecture == 'CNN' or architecture == 'MLP':
+    if architecture == 'CNN' or architecture == 'MLP' or architecture == 'ResNet8' or architecture == 'VGG':
         BATCHSIZE = 1000
         BATCHES = 1
-    if architecture == 'ResNet' or architecture == 'VGG':
+    if architecture == 'ResNet':
         BATCHSIZE = 32
         BATCHES = 8
     batches = [
@@ -407,3 +474,21 @@ def plot_hist(hist):
         plt.show()
     except:
         pass
+    
+def _find_layers_and_masks(model):
+    if len(model.conv_layers) != 0:
+        print('jup')
+        return True
+    for i, w in enumerate(model.get_weights()):
+        print(i ,'/', len(model.get_weights()))
+        if len(w.shape) == 4 and w.shape[0] != 1: 
+            if np.all([x == 0 or x == 1 for x in w.flatten()]) == False: 
+                model.conv_layers.append(i)
+            else:
+                model.conv_masks.append(i)
+        if len(w.shape) == 2: 
+            if np.all([x == 0 or x == 1 for x in w.flatten()]) == False: 
+                model.dense_layers.append(i)
+            else:
+                model.dense_masks.append(i)
+    return True

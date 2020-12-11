@@ -20,16 +20,20 @@ AUTOTUNE = tf.data.experimental.AUTOTUNE
 
 
 
-def run(structure, method, scope, iterations, architecture, experiment_type, structure_to_prune='filter', prune_dense_layers=False ):
+def run(structure, method, scope, iterations, architecture, structure_to_prune='filter', prune_dense_layers=False ):
     
-    if architecture == 'ResNet' or architecture == 'VGG':
+    if architecture == 'ResNet':
         ds_train, ds_test, attack_images, attack_labels = load_data("imagenette")
+    if architecture == 'ResNet8' or architecture == 'VGG':
+        ds_train, ds_test, attack_images, attack_labels = load_data("cifar10")
     if architecture == 'MLP' or architecture == 'CNN':
         ds_train, ds_test, attack_images, attack_labels = load_data("mnist")
 
-    
-    experiment_name = f'{experiment_type}-{architecture}-{method}-{scope}-{structure}'
-    cols = ['iteration','experiment_name','structure','method','scope','pruning_ratio','accuracy','loss','pgd_linf','cw_l2','bb_l0', 'total_params', 'params_left']
+    if structure == 'structured':
+        experiment_name = f'{architecture}-{method}-{scope}-{structure}-{structure_to_prune}'
+    if structure == 'unstructured':
+        experiment_name = f'{architecture}-{method}-{scope}-{structure}'
+    cols = ['iteration','structure','method','scope','pruning_ratio','accuracy','loss','pgd_linf','cw_l2','bb_l0', 'total_params', 'params_left']
     results = pd.DataFrame(columns=cols, dtype='object')
     pgd_success_rates = []
     cw_success_rates = []
@@ -86,7 +90,7 @@ def run(structure, method, scope, iterations, architecture, experiment_type, str
 
                 hist = train_model(architecture, ds_train, ds_test, model, to_convergence=True)
                 zeros_ratio, non_zeros, param_count = get_zeros_ratio(model)
-                if architecture == 'ResNet' or architecture=='VGG':
+                if architecture == 'ResNet' or architecture == 'ResNet8' or architecture=='VGG':
                     res = model.evaluate(ds_test,verbose=0)
                 if architecture == 'CNN' or architecture=='MLP':
                     res = model.evaluate(ds_test[0], ds_test[1],verbose=0)
