@@ -59,6 +59,7 @@ def run(structure, method, scope, iterations, architecture, structure_to_prune='
             pass
         tf.compat.v1.reset_default_graph()
         tf.keras.backend.clear_session()
+        tf.random.set_seed(j)
         
         model = initialize_base_model(architecture, ds_train, j ,experiment_name=experiment_name, lr=1e-3, )
 
