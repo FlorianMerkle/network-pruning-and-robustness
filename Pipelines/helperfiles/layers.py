@@ -116,7 +116,7 @@ class CustomDenseLayer(layers.Layer):
         if self.bias == True:
             x = tf.nn.bias_add(x, self.b)
         if self.a == 'relu':
-            return tf.nn.tanh(x)
+            return tf.nn.relu(x)
         if self.a == 'softmax':
             return tf.nn.softmax(x)
     
