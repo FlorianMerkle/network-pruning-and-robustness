@@ -1,4 +1,5 @@
 .DS_Store
+.vscode
 .git
 .ipynb_checkpoints
 Adversarial/saved-models
