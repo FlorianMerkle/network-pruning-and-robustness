@@ -20,7 +20,7 @@ from datetime import datetime
 AUTOTUNE = tf.data.experimental.AUTOTUNE
 
 
-def load_data(dataset,ratio='100%'):
+def load_data(dataset):
 
     def augment(image,label):
         #image = tf.image.convert_image_dtype(image, tf.float32)
@@ -48,9 +48,10 @@ def load_data(dataset,ratio='100%'):
        
     if dataset=='mnist':
         
-        ds, info = tfds.load(name=dataset, with_info=True, split=[f"train[:{ratio}]",f"test[:{ratio}]"])
+        ds, info = tfds.load(name=dataset, with_info=True, split=["train[:90%]","train[90%:]","test"])
         ds_train=ds[0]
-        ds_test=ds[1]
+        ds_val = ds[1]
+        ds_test=ds[2]
         
         def normalize(x):
             y = {'image': tf.image.convert_image_dtype(x['image'], tf.float32), 'label': x['label']}
@@ -58,18 +59,23 @@ def load_data(dataset,ratio='100%'):
             return y
         ds_test = list(ds_test.map(load_image))
         ds_train = list(ds_train.map(load_image))
+        ds_val = list(ds_val.map(load_image))
 
         x_train = tf.convert_to_tensor([sample[0] for sample in ds_train])
         y_train = tf.convert_to_tensor([sample[1] for sample in ds_train])
         x_test = tf.convert_to_tensor([sample[0] for sample in ds_test])
         y_test = tf.convert_to_tensor([sample[1] for sample in ds_test])
+        x_val = tf.convert_to_tensor([sample[0] for sample in ds_val])
+        y_val = tf.convert_to_tensor([sample[1] for sample in ds_val])
 
-        return [x_train, y_train], [x_test, y_test], x_test[:1000], y_test[:1000]
+        return [x_train, y_train], [x_val, y_val], [x_test, y_test], x_test[:1000], y_test[:1000]
     
     if dataset=='cifar10':
-        ds, info = tfds.load(name=dataset, with_info=True, split=[f"train[:{ratio}]",f"test[:{ratio}]"])
+        ds, info = tfds.load(name=dataset, with_info=True, split=["train[:90%]","train[90%:]","test"])
         ds_train=ds[0]
-        ds_test=ds[1]
+        ds_val=ds[1]
+        ds_test=ds[2]
+        
         def normalize(x):
             y = {'image': tf.image.convert_image_dtype(x['image'], tf.float32), 'label': x['label']}
             y = (tf.image.resize(y['image'], (32,32)), y['label'])
@@ -87,6 +93,13 @@ def load_data(dataset,ratio='100%'):
             .batch(BATCH_SIZE)
             .prefetch(AUTOTUNE)
         ) 
+        
+        ds_val = ds_val.map(
+            normalize, )
+        ds_val = ds_val.batch(BATCH_SIZE)
+        ds_val = ds_val.cache()
+        ds_val = ds_val.prefetch(tf.data.experimental.AUTOTUNE)
+
 
         ds_test = ds_test.map(
             normalize, )
@@ -100,18 +113,20 @@ def load_data(dataset,ratio='100%'):
 
         attack_images = tf.convert_to_tensor([sample[0] for sample in attack_set])
         attack_labels = tf.convert_to_tensor([sample[1] for sample in attack_set])
-        return ds_train, ds_test, attack_images, attack_labels
+        return ds_train, ds_val, ds_test, attack_images, attack_labels
     
     
     if dataset=='imagenette':
-        ds, info = tfds.load(name=dataset, with_info=True, split=[f"train[:{ratio}]",f"validation[:{ratio}]"])
-        
+
+        ds, info = tfds.load(name=dataset, with_info=True, split=["train[:90%]","train[90%:]","validation"])
         ds_train=ds[0]
-        ds_test=ds[1]
+        ds_val=ds[1]
+        ds_test=ds[2]
+        
         def normalize(x):
             y = {'image': tf.image.convert_image_dtype(x['image'], tf.float32), 'label': x['label']}
             y = (tf.image.resize(y['image'], (224,224)), y['label'])
-            print('y tho?')
+
             return y
 
 
@@ -128,9 +143,16 @@ def load_data(dataset,ratio='100%'):
             .batch(BATCH_SIZE)
             .prefetch(AUTOTUNE)
         ) 
+        ds_val = (
+            ds_val
+            .map(normalize)
+            .batch(BATCH_SIZE)
+            .cache()
+            .prefetch(tf.data.experimental.AUTOTUNE)
+        )
 
-        ds_test = ds_test.map(
-            normalize, )
+        
+        ds_test = ds_test.map(normalize, )
         ds_test = ds_test.batch(BATCH_SIZE)
         ds_test = ds_test.cache()
         ds_test = ds_test.prefetch(tf.data.experimental.AUTOTUNE)
@@ -142,7 +164,7 @@ def load_data(dataset,ratio='100%'):
         attack_images = tf.convert_to_tensor([sample[0] for sample in attack_set])
         attack_labels = tf.convert_to_tensor([sample[1] for sample in attack_set])
 
-        return ds_train, ds_test, attack_images, attack_labels
+        return ds_train, ds_val, ds_test, attack_images, attack_labels
     
     return False
 
@@ -229,7 +251,7 @@ def initialize_base_model(architecture, ds, index, experiment_name, lr=1e-3, sav
 
 
 
-def train_model(architecture, ds_train, ds_test, model, to_convergence=True, epochs=5):
+def train_model(architecture, ds_train, ds_val, model, to_convergence=True, epochs=5):
     if architecture=='CNN' or architecture=='MLP':
         if to_convergence == True:
             epochs=500
@@ -240,7 +262,7 @@ def train_model(architecture, ds_train, ds_test, model, to_convergence=True, epo
             batch_size=64,
             epochs=epochs,
             callbacks=[callback],
-            validation_data=(ds_test[0], ds_test[1]),
+            validation_data=(ds_val[0], ds_val[1]),
         )
         return hist
     
@@ -269,7 +291,7 @@ def train_model(architecture, ds_train, ds_test, model, to_convergence=True, epo
         hist = model.fit(
             x=ds_train,
             epochs=epochs,
-            validation_data=ds_test,
+            validation_data=ds_val,
             callbacks=[reduce_lr, early_stopping, model_checkpoint_callback],
         )
         return hist
@@ -284,7 +306,7 @@ def pgd_attack(architecture, model_to_attack, attack_images, attack_labels):
     BATCHSIZE = 32
     fmodel = fb.models.TensorFlowModel(model_to_attack, bounds=(0,1))
     attack = fb.attacks.LinfProjectedGradientDescentAttack()
-    if architecture == 'CNN' or architecture == 'MLP' or architecture == 'ResNet8':
+    if architecture == 'CNN' or architecture == 'MLP':
         adversarials, _, success = attack(
             fmodel,
             attack_images,
@@ -299,7 +321,7 @@ def pgd_attack(architecture, model_to_attack, attack_images, attack_labels):
             fmodel,
             attack_images,
             attack_labels,
-            epsilons=[x/255 for x in [.5,1,2,4,8,16,32]]
+            epsilons=[x/255 for x in [.125,.25,.5,1,2,4,8,16,32]]
         )
         del fmodel
         return [np.count_nonzero(eps_res)/len(attack_labels) for eps_res in success]
@@ -477,7 +499,6 @@ def plot_hist(hist):
     
 def _find_layers_and_masks(model):
     if len(model.conv_layers) != 0:
-        print('jup')
         return True
     for i, w in enumerate(model.get_weights()):
         print(i ,'/', len(model.get_weights()))

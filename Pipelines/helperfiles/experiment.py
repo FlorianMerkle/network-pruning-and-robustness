@@ -20,21 +20,27 @@ AUTOTUNE = tf.data.experimental.AUTOTUNE
 
 
 
-def run(structure, method, scope, iterations, architecture, structure_to_prune='filter', prune_dense_layers=False ):
+def run(structure, method, scope, iterations, architecture, structure_to_prune='filter', prune_dense_layers=False, overwrite=False):
     
     if architecture == 'ResNet':
-        ds_train, ds_test, attack_images, attack_labels = load_data("imagenette")
+        ds_train, ds_val, ds_test, attack_images, attack_labels = load_data("imagenette")
     if architecture == 'ResNet8' or architecture == 'VGG':
-        ds_train, ds_test, attack_images, attack_labels = load_data("cifar10")
+        ds_train, ds_val, ds_test, attack_images, attack_labels = load_data("cifar10")
     if architecture == 'MLP' or architecture == 'CNN':
-        ds_train, ds_test, attack_images, attack_labels = load_data("mnist")
+        ds_train, ds_val, ds_test, attack_images, attack_labels = load_data("mnist")
 
     if structure == 'structured':
         experiment_name = f'{architecture}-{method}-{scope}-{structure}-{structure_to_prune}'
     if structure == 'unstructured':
         experiment_name = f'{architecture}-{method}-{scope}-{structure}'
     cols = ['iteration','structure','method','scope','pruning_ratio','accuracy','loss','pgd_linf','cw_l2','bb_l0', 'total_params', 'params_left']
-    results = pd.DataFrame(columns=cols, dtype='object')
+    if overwrite==False:
+        try:
+            results = pd.read_pickle(f'./final-results/{experiment_name}.pkl')
+        except:    
+            results = pd.DataFrame(columns=cols, dtype='object')
+    if overwrite==True:
+        results = pd.DataFrame(columns=cols, dtype='object')
     pgd_success_rates = []
     cw_success_rates = []
     bb0_success_rates = []
@@ -89,7 +95,8 @@ def run(structure, method, scope, iterations, architecture, structure_to_prune='
                 zeros_ratio, non_zeros, param_count = get_zeros_ratio(model)
                 compile_model(architecture, model)
 
-                hist = train_model(architecture, ds_train, ds_test, model, to_convergence=True)
+                hist = train_model(architecture, ds_train, ds_val, model, to_convergence=True)
+
                 zeros_ratio, non_zeros, param_count = get_zeros_ratio(model)
                 if architecture == 'ResNet' or architecture == 'ResNet8' or architecture=='VGG':
                     res = model.evaluate(ds_test,verbose=0)
