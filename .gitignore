@@ -6,8 +6,8 @@ Adversarial/saved-models
 saved-models
 Pipelines/saved-weights
 Pipelines/saved-results
-Visualization.ipynb
-get-activation-values.ipynb
+./Visualization.ipynb
+./get-activation-values.ipynb
 additional-visualization.ipynb
 *.tex
 __pycache__
