@@ -10,6 +10,3 @@ The most important packages and versions are:
 - Tensorflow 2.2
 - Tensorflow-datasets 3.1.0
 - Foolbox 3.0.4
-
-### Results
-You can find a write-up of the results on [arxiv](https://arxiv.org/abs/2108.08560)
