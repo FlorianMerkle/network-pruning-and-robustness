@@ -14,7 +14,7 @@ import random
 from secrets import randbelow
 import foolbox as fb
 from datetime import datetime
-from helperfiles.helpers import load_data, initialize_base_model, get_zeros_ratio, train_model, compile_model, bb0_attack, pgd_attack,cw2_attack, plot_hist
+from ..helperfiles.helpers import load_data, initialize_base_model, get_zeros_ratio, train_model, compile_model, bb0_attack, pgd_attack,cw2_attack, plot_hist
 
 AUTOTUNE = tf.data.experimental.AUTOTUNE
 
